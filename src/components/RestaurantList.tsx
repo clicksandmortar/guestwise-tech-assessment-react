@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ListGroup, Container, Spinner, Alert, Form, Row, Col } from "react-bootstrap";
+import { ListGroup, Container, Spinner, Alert, Form, Button } from "react-bootstrap";
 import { getRestaurants } from "../services/api";
 
 type Restaurant = {
@@ -17,8 +17,9 @@ const RestaurantList: React.FC<RestaurantListProps> = ({ onRestaurantSelect }) =
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState<number | null>(null);
-  const [isLoadingRestaurant, setIsLoadingRestaurant] = useState<boolean>(false); 
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<"name" | "rating-asc" | "rating-desc">("name");
+  const [isLoadingRestaurant, setIsLoadingRestaurant] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchRestaurantData = async () => {
@@ -36,17 +37,38 @@ const RestaurantList: React.FC<RestaurantListProps> = ({ onRestaurantSelect }) =
     fetchRestaurantData();
   }, []);
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSortChange = (sortType: "name" | "rating-asc" | "rating-desc") => {
+    setSortOrder(sortType);
+  };
+
+  const filteredRestaurants = restaurants.filter((restaurant) =>
+    restaurant.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const sortedRestaurants = [...filteredRestaurants].sort((a, b) => {
+    if (sortOrder === "name") {
+      return a.name.localeCompare(b.name);
+    } else if (sortOrder === "rating-asc") {
+      return a.rating - b.rating;
+    } else {
+      return b.rating - a.rating;
+    }
+  });
+
   const handleRestaurantSelect = async (id: number) => {
-    setSelectedRestaurantId(id); 
-    setIsLoadingRestaurant(true); 
+    setIsLoadingRestaurant(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000)); 
-      onRestaurantSelect(id); 
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      onRestaurantSelect(id);
     } catch (err) {
       console.error("Error selecting restaurant", err);
     } finally {
-      setIsLoadingRestaurant(false); 
+      setIsLoadingRestaurant(false);
     }
   };
 
@@ -75,6 +97,28 @@ const RestaurantList: React.FC<RestaurantListProps> = ({ onRestaurantSelect }) =
   return (
     <Container>
       <h2>Restaurants</h2>
+
+      <Form.Group controlId="search">
+        <Form.Control
+          type="text"
+          placeholder="Search restaurants"
+          value={searchQuery}
+          onChange={handleSearchChange}
+        />
+      </Form.Group>
+
+      <div className="my-3">
+        <Button variant="secondary" onClick={() => handleSortChange("name")}>
+          Sort by Name
+        </Button>{" "}
+        <Button variant="secondary" onClick={() => handleSortChange("rating-asc")}>
+          Sort by Rating (Asc)
+        </Button>{" "}
+        <Button variant="secondary" onClick={() => handleSortChange("rating-desc")}>
+          Sort by Rating (Desc)
+        </Button>
+      </div>
+
       {isLoadingRestaurant && (
         <div className="d-flex justify-content-center my-4">
           <Spinner animation="border" role="status" />
@@ -82,18 +126,25 @@ const RestaurantList: React.FC<RestaurantListProps> = ({ onRestaurantSelect }) =
       )}
 
       <ListGroup className="fade-in">
-        {restaurants.map((restaurant) => (
-          <ListGroup.Item
-            key={restaurant.id}
-            action
-            onClick={() => handleRestaurantSelect(restaurant.id)}
-            className="fade-item"
-          >
-            <h5>{restaurant.name}</h5>
-            <p>{restaurant.shortDescription}</p>
-            <small>Rating: {restaurant.rating}</small>
-          </ListGroup.Item>
-        ))}
+        {sortedRestaurants.length > 0 ? (
+          sortedRestaurants.map((restaurant) => (
+            <ListGroup.Item
+              key={restaurant.id}
+              action
+              onClick={() => handleRestaurantSelect(restaurant.id)}
+              className="fade-item"
+              role="listitem"
+            >
+              <h5>{restaurant.name}</h5>
+              <p>{restaurant.shortDescription}</p>
+              <small>Rating: {restaurant.rating}</small>
+            </ListGroup.Item>
+          ))
+        ) : (
+          <Alert variant="info" className="mt-4">
+            No restaurants found.
+          </Alert>
+        )}
       </ListGroup>
     </Container>
   );
