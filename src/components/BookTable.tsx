@@ -1,49 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Alert, Form, Button, Row, Col } from "react-bootstrap";
 
-const BookTable: React.FC = () => {
-  const [formData, setFormData] = useState({
+type BookTableProps = {
+  restaurantId: number | null; // Get the selected restaurant ID
+};
+
+const BookTable: React.FC<BookTableProps> = ({ restaurantId }) => {
+  const initialFormState = {
     name: "",
     email: "",
     phone: "",
     date: "",
     time: "",
     guests: 1,
-  });
+  };
 
+  const [formData, setFormData] = useState(initialFormState);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  useEffect(() => {
+    setFormData(initialFormState); 
+    setError(null);
+    setSuccessMessage(null); 
+  }, [restaurantId]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
     setSuccessMessage(null);
+    const { name, email, phone, date, time, guests } = formData;
 
-    if (!formData.name || !formData.email || !formData.phone) {
-      setError("Please fill in all required fields (name, email, phone).");
+    if (!name || !email || !phone || !date || !time) {
+      setError("Please fill in all required fields (name, email, phone, date, time).");
       return;
     }
-
     const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-    if (!emailPattern.test(formData.email)) {
+    if (!emailPattern.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
-
     const phonePattern = /^[0-9]+$/;
-    if (!phonePattern.test(formData.phone)) {
+    if (!phonePattern.test(phone)) {
       setError("Please enter a valid phone number (digits only).");
       return;
     }
-
-    if (formData.guests < 1 || formData.guests > 12) {
+    if (guests < 1 || guests > 12) {
       setError(
-        "Bookings are limited to a maximum of 12 people. Please contact us directly for larger groups."
+        "Bookings are limited to a maximum of 12 people. Please contact the restaurant directly for larger groups."
       );
       return;
     }
-
-    const selectedDateTime = new Date(`${formData.date}T${formData.time}`);
+    const selectedDateTime = new Date(`${date}T${time}`);
     const currentTime = new Date();
     const oneHourFromNow = new Date(currentTime.getTime() + 60 * 60 * 1000); // 1 hour in the future
 
@@ -51,23 +58,11 @@ const BookTable: React.FC = () => {
       setError("Booking must be scheduled at least 1 hour in the future.");
       return;
     }
-
     try {
-      const response = await fetch("http://localhost:3001/bookings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) throw new Error("Booking failed");
-
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
       setSuccessMessage("Booking successful!");
-    } catch (err) {
+    } catch (error) {
       setError("Booking failed. Please try again.");
-    } finally {
-      console.log("Completed request");
     }
   };
 

@@ -21,8 +21,9 @@ function App() {
           {selectedRestaurantId && (
             <>
               <RestaurantDetails restaurantId={selectedRestaurantId} />
-              <BookTable />
+              {selectedRestaurantId && <BookTable restaurantId={selectedRestaurantId} />}
             </>
+
           )}
         </Col>
       </Row>
