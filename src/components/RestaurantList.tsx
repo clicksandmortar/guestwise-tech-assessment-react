@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ListGroup, Container, Spinner, Alert } from "react-bootstrap";
-import { getRestaurants } from "../services/api"; // Assuming you have this service
+import { getRestaurants } from "../services/api"; // Make sure your API call works correctly
 
 type Restaurant = {
   id: number;
@@ -16,9 +16,10 @@ const RestaurantList: React.FC<RestaurantListProps> = ({
   onRestaurantSelect,
 }) => {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [loading, setLoading] = useState<boolean>(true); 
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch restaurant data on component mount
   useEffect(() => {
     const fetchRestaurantData = async () => {
       try {
@@ -35,25 +36,23 @@ const RestaurantList: React.FC<RestaurantListProps> = ({
     fetchRestaurantData();
   }, []);
 
-
+  // Render spinner while loading
   if (loading) {
     return (
       <Container>
         <h2>Restaurants</h2>
-        {/* Spinner while loading */}
         <div className="d-flex justify-content-center mt-4">
-          <Spinner animation="border" role="status">
-          </Spinner>
+          <Spinner animation="border" role="status"></Spinner>
         </div>
       </Container>
     );
   }
 
+  // Render error message if an error occurs
   if (error) {
     return (
       <Container>
         <h2>Restaurants</h2>
-        {/* Error message */}
         <Alert variant="danger" className="mt-4">
           {error}
         </Alert>
@@ -61,19 +60,20 @@ const RestaurantList: React.FC<RestaurantListProps> = ({
     );
   }
 
+  // Render the restaurant list
   return (
     <Container>
       <h2>Restaurants</h2>
       <ListGroup className="fade-in">
         {restaurants.map((restaurant) => (
           <ListGroup.Item
-            key={restaurant.id}
+            key={restaurant?.id} // Optional chaining for safety
             action
             onClick={() => onRestaurantSelect(restaurant.id)}
             className="fade-item"
           >
-            <h5>{restaurant.name}</h5>
-            <p>{restaurant.shortDescription}</p>
+            <h5>{restaurant?.name}</h5>
+            <p>{restaurant?.shortDescription}</p>
           </ListGroup.Item>
         ))}
       </ListGroup>
